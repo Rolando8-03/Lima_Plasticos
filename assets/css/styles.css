@@ -1,0 +1,37 @@
+* { box-sizing: border-box; }
+body { font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 0; color: #222; background: #f7f7f9; }
+.app-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: #0c5; color: #fff; }
+.app-header h1 { margin: 0; font-size: 1.4rem; }
+.tabs { display: flex; gap: .5rem; }
+.tab-btn { background: rgba(255,255,255,.2); border: none; color: #fff; padding: .5rem .75rem; border-radius: .5rem; cursor: pointer; }
+.tab-btn.active { background: #fff; color: #0c5; }
+main { padding: 1rem; }
+.hidden { display: none; }
+.form-grid { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: .75rem 1rem; background: #fff; padding: 1rem; border-radius: .75rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.form-row { display: flex; flex-direction: column; }
+.form-row label { font-size: .85rem; color: #555; margin-bottom: .25rem; }
+.form-row input, .form-row select { padding: .5rem; border: 1px solid #ddd; border-radius: .5rem; }
+.form-actions { grid-column: 1 / -1; display: flex; gap: .5rem; }
+button { padding: .6rem .9rem; border-radius: .5rem; border: 1px solid #0c5; background: #0c5; color: #fff; cursor: pointer; }
+button.secondary { border-color: #aaa; background: #fff; color: #333; }
+.toolbar { display: flex; gap: .5rem; align-items: center; margin: 1rem 0; }
+.import-label { display: inline-flex; align-items: center; gap: .5rem; background: #fff; color: #333; border: 1px solid #ddd; padding: .5rem .75rem; border-radius: .5rem; }
+.import-label input { display: none; }
+.data-table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.08); border-radius: .75rem; overflow: hidden; }
+.data-table th, .data-table td { padding: .6rem .75rem; border-bottom: 1px solid #eee; text-align: left; }
+.data-table thead { background: #fafafa; }
+.data-table tfoot td { font-weight: 600; }
+.text-right { text-align: right; }
+.cards { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.card { background: #fff; border: 1px solid #eee; border-radius: .75rem; padding: .75rem; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.card .label { font-size: .85rem; color: #666; }
+.card .value { font-size: 1.3rem; font-weight: 700; }
+.app-footer { padding: .75rem 1rem; color: #555; }
+@media (max-width: 900px) {
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: 1fr; }
+}

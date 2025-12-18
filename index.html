@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lima Plásticos</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <!-- SheetJS (XLSX) for Excel import/export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Lima Plásticos</h1>
+    <nav class="tabs">
+      <button class="tab-btn" data-tab="inventario">Inventario</button>
+      <button class="tab-btn" data-tab="facturacion">Facturación</button>
+      <button class="tab-btn" data-tab="reportes">Control Financiero</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Inventario -->
+    <section id="inventario" class="tab-panel">
+      <h2>Inventario</h2>
+      <form id="form-inventario" class="form-grid">
+        <div class="form-row">
+          <label for="inv-categoria">Categoría</label>
+          <input id="inv-categoria" type="text" value="1" readonly />
+        </div>
+        <div class="form-row">
+          <label for="inv-tipo">Tipo</label>
+          <input id="inv-tipo" type="text" placeholder="Ej. Botella" required />
+        </div>
+        <div class="form-row">
+          <label for="inv-tamano">Tamaño</label>
+          <input id="inv-tamano" type="text" placeholder="Ej. 1L" required />
+        </div>
+        <div class="form-row">
+          <label for="inv-marca">Marca</label>
+          <input id="inv-marca" type="text" placeholder="Marca" required />
+        </div>
+        <div class="form-row">
+          <label for="inv-color">Color</label>
+          <input id="inv-color" type="text" placeholder="Color" required />
+        </div>
+        <div class="form-row">
+          <label for="inv-cantidad">Cantidad</label>
+          <input id="inv-cantidad" type="number" min="0" step="1" required />
+        </div>
+        <div class="form-row">
+          <label for="inv-precio-compra">Precio de compra</label>
+          <input id="inv-precio-compra" type="number" min="0" step="0.01" required />
+        </div>
+        <div class="form-row">
+          <label for="inv-precio-venta">Precio de venta</label>
+          <input id="inv-precio-venta" type="number" min="0" step="0.01" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit">Agregar producto</button>
+        </div>
+      </form>
+
+      <div class="toolbar">
+        <button id="btn-exportar-excel">Exportar Inventario (Excel)</button>
+        <label class="import-label">
+          Importar Inventario (Excel)
+          <input id="input-import-excel" type="file" accept=".xlsx,.xls" />
+        </label>
+        <input id="inv-buscar" type="search" placeholder="Buscar por código, marca, tipo..." />
+      </div>
+
+      <table class="data-table" id="tabla-inventario">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Categoría</th>
+            <th>Tipo</th>
+            <th>Tamaño</th>
+            <th>Marca</th>
+            <th>Color</th>
+            <th>Cantidad</th>
+            <th>Precio Compra</th>
+            <th>Precio Venta</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Facturación -->
+    <section id="facturacion" class="tab-panel hidden">
+      <h2>Facturación</h2>
+      <form id="form-linea-factura" class="form-grid">
+        <div class="form-row">
+          <label for="fac-codigo">Código producto</label>
+          <input id="fac-codigo" type="text" placeholder="Ej. LP-000001" />
+        </div>
+        <div class="form-row">
+          <label for="fac-cantidad">Cantidad</label>
+          <input id="fac-cantidad" type="number" min="1" step="1" />
+        </div>
+        <div class="form-actions">
+          <button type="button" id="btn-agregar-linea">Agregar a factura</button>
+        </div>
+      </form>
+
+      <table class="data-table" id="tabla-factura-detalle">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Cantidad</th>
+            <th>Precio Venta</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="text-right">Total</td>
+            <td id="factura-total">0.00</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="form-actions">
+        <button id="btn-registrar-factura">Registrar factura</button>
+        <button id="btn-limpiar-factura" class="secondary">Limpiar</button>
+      </div>
+
+      <h3>Facturas registradas</h3>
+      <table class="data-table" id="tabla-facturas">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha</th>
+            <th>Items</th>
+            <th>Total Venta</th>
+            <th>Ganancia</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Control Financiero -->
+    <section id="reportes" class="tab-panel hidden">
+      <h2>Control Financiero</h2>
+      <div class="toolbar">
+        <select id="reporte-rango">
+          <option value="dia">Por día</option>
+          <option value="semana">Por semana</option>
+          <option value="mes">Por mes</option>
+        </select>
+        <input id="reporte-fecha" type="date" />
+        <button id="btn-generar-reporte">Generar</button>
+      </div>
+
+      <div class="cards">
+        <div class="card"><div class="label">Ventas</div><div class="value" id="rep-ventas">0.00</div></div>
+        <div class="card"><div class="label">Ganancia</div><div class="value" id="rep-ganancia">0.00</div></div>
+        <div class="card"><div class="label">Items vendidos</div><div class="value" id="rep-items">0</div></div>
+        <div class="card"><div class="label">Ticket promedio</div><div class="value" id="rep-ticket">0.00</div></div>
+      </div>
+
+      <h3>Detalle de ventas</h3>
+      <table class="data-table" id="tabla-reporte-detalle">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th># Factura</th>
+            <th>Items</th>
+            <th>Total Venta</th>
+            <th>Ganancia</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <small>© 2025 Lima Plásticos</small>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/inventory.js"></script>
+  <script src="assets/js/billing.js"></script>
+  <script src="assets/js/reports.js"></script>
+</body>
+</html>
