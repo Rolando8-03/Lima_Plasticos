@@ -22,11 +22,17 @@ button.secondary { border-color: #aaa; background: #fff; color: #333; }
 .data-table thead { background: #fafafa; }
 .data-table tfoot td { font-weight: 600; }
 .text-right { text-align: right; }
+.low-stock { color: #c00; }
+.resaltar { background: #f1f8e9; }
+.table-selectable tbody tr.selected-row { background: #e8f5e9; }
 .cards { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
 .card { background: #fff; border: 1px solid #eee; border-radius: .75rem; padding: .75rem; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
 .card .label { font-size: .85rem; color: #666; }
 .card .value { font-size: 1.3rem; font-weight: 700; }
-.app-footer { padding: .75rem 1rem; color: #555; }
+.cards-actions { display: flex; justify-content: flex-end; margin: .5rem 0 1rem; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal.hidden { display: none; }
+.modal .modal-content { background: #fff; border-radius: .75rem; padding: 1rem; width: 100%; max-width: 960px; box-shadow: 0 6px 24px rgba(0,0,0,.2); }
 @media (max-width: 900px) {
   .form-grid { grid-template-columns: repeat(2, 1fr); }
   .cards { grid-template-columns: repeat(2, 1fr); }

@@ -1,83 +1,122 @@
 // Control Financiero - Lima Plásticos
 (function(){
-  function groupByDay(invoices, baseDate) {
-    const target = baseDate ? new Date(baseDate) : null;
-    const fmt = d => d.toISOString().slice(0,10);
-    return invoices.filter(inv => !target || fmt(new Date(inv.fecha)) === fmt(target));
+  function formatDay(date) {
+    const d = new Date(date);
+    return d.toISOString().slice(0,10);
   }
 
-  function getISOWeek(d) {
-    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const dayNum = date.getUTCDay() || 7;
-    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
-    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  function filterByDay(invoices, dayDate) {
+    const target = dayDate ? formatDay(dayDate) : formatDay(new Date());
+    return invoices.filter(inv => formatDay(inv.fecha) === target);
   }
 
-  function groupByWeek(invoices, baseDate) {
-    const target = baseDate ? new Date(baseDate) : new Date();
-    const targetYear = target.getFullYear();
-    const targetWeek = getISOWeek(target);
-    return invoices.filter(inv => {
-      const d = new Date(inv.fecha);
-      return d.getFullYear() === targetYear && getISOWeek(d) === targetWeek;
+  function buildProductRows(invoices) {
+    const map = new Map();
+    invoices.forEach(inv => {
+      inv.items.forEach(it => {
+        const desc = `${it.descripcion}`;
+        const key = `${formatDay(inv.fecha)}|${desc}|${it.precio_venta}`;
+        const prev = map.get(key) || { fecha: formatDay(inv.fecha), desc, precio: it.precio_venta, cantidad: 0 };
+        prev.cantidad += it.cantidad;
+        map.set(key, prev);
+      });
     });
-  }
-
-  function groupByMonth(invoices, baseDate) {
-    const target = baseDate ? new Date(baseDate) : new Date();
-    return invoices.filter(inv => {
-      const d = new Date(inv.fecha);
-      return d.getFullYear() === target.getFullYear() && d.getMonth() === target.getMonth();
-    });
+    return Array.from(map.values()).map(r => ({
+      fecha: r.fecha,
+      desc: r.desc,
+      precio: r.precio,
+      cantidad: r.cantidad,
+      total: r.cantidad * r.precio
+    }));
   }
 
   function renderReport(list) {
     const ventas = list.reduce((a,b)=> a + b.total_venta, 0);
     const ganancia = list.reduce((a,b)=> a + b.ganancia, 0);
     const items = list.reduce((a,b)=> a + b.items.reduce((x,y)=> x+y.cantidad, 0), 0);
-    const ticket = list.length ? ventas / list.length : 0;
 
     document.getElementById('rep-ventas').textContent = ventas.toFixed(2);
     document.getElementById('rep-ganancia').textContent = ganancia.toFixed(2);
     document.getElementById('rep-items').textContent = items.toString();
-    document.getElementById('rep-ticket').textContent = ticket.toFixed(2);
 
     const tbody = document.querySelector('#tabla-reporte-detalle tbody');
     tbody.innerHTML = '';
-    for (const inv of list) {
+    const rows = buildProductRows(list);
+    for (const r of rows) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${new Date(inv.fecha).toLocaleString()}</td>
-        <td>${inv.id}</td>
-        <td>${inv.items.reduce((a,b)=>a+b.cantidad,0)}</td>
-        <td>${inv.total_venta.toFixed(2)}</td>
-        <td>${inv.ganancia.toFixed(2)}</td>
+        <td>${r.fecha}</td>
+        <td>${r.desc}</td>
+        <td>${r.precio.toFixed(2)}</td>
+        <td>${r.cantidad}</td>
+        <td>${r.total.toFixed(2)}</td>
       `;
       tbody.appendChild(tr);
     }
   }
 
+  function refreshDaily() {
+    const fechaInput = document.getElementById('reporte-fecha');
+    const selected = fechaInput?.value ? new Date(fechaInput.value) : new Date();
+    const today = new Date();
+    const sameDay = formatDay(selected) === formatDay(today);
+    if (!sameDay) return; // si se seleccionó otro día, no actualizamos
+    const invoices = LP.billing.getInvoices();
+    const todayList = filterByDay(invoices, today);
+    renderReport(todayList);
+  }
+
   function init() {
     const fechaInput = document.getElementById('reporte-fecha');
-    fechaInput.valueAsDate = new Date();
-
-    document.getElementById('btn-generar-reporte').addEventListener('click', () => {
-      const rango = document.getElementById('reporte-rango').value;
-      const fecha = fechaInput.value;
+    if (fechaInput) {
+      fechaInput.valueAsDate = new Date();
+      fechaInput.addEventListener('change', () => {
+        const invoices = LP.billing.getInvoices();
+        const list = fechaInput.value ? filterByDay(invoices, new Date(fechaInput.value)) : [];
+        renderReport(list);
+      });
+    }
+    const btn = document.getElementById('btn-generar-reporte');
+    if (btn) btn.addEventListener('click', () => {
       const invoices = LP.billing.getInvoices();
-      let list = [];
-      if (rango === 'dia') list = groupByDay(invoices, fecha);
-      else if (rango === 'semana') list = groupByWeek(invoices, fecha);
-      else list = groupByMonth(invoices, fecha);
+      const value = document.getElementById('reporte-fecha')?.value;
+      const list = value ? filterByDay(invoices, new Date(value)) : [];
       renderReport(list);
+      exportReportToExcel(list, value);
     });
-
-    // initial render
+    // Render inicial: hoy
     const invoices = LP.billing.getInvoices();
-    renderReport(groupByDay(invoices, new Date()));
+    const todayList = filterByDay(invoices, new Date());
+    renderReport(todayList);
+  }
+
+  function exportReportToExcel(invoicesList, value) {
+    // Export only the detail table (same info shown on screen)
+    const rows = buildProductRows(invoicesList);
+    const headers = ['Fecha','Producto','Precio unitario','Cantidad','Total venta'];
+    const aoa = [headers];
+    rows.forEach(r => aoa.push([r.fecha, r.desc, r.precio, r.cantidad, r.total]));
+
+    const wsDetalle = XLSX.utils.aoa_to_sheet(aoa);
+    // Auto fit columns
+    const colWidths = headers.map((h, idx) => {
+      const maxLen = aoa.reduce((m, row) => {
+        const v = row[idx] == null ? '' : String(row[idx]);
+        return Math.max(m, v.length);
+      }, String(h).length);
+      return { wch: Math.min(Math.max(maxLen + 2, 8), 40) };
+    });
+    wsDetalle['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle');
+
+    const day = value ? new Date(value) : new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const stamp = `${day.getFullYear()}${pad(day.getMonth()+1)}${pad(day.getDate())}`;
+    XLSX.writeFile(wb, `Control_Financiero_Detalle_${stamp}.xlsx`);
   }
 
   window.LP = window.LP || {};
-  LP.reports = { init };
+  LP.reports = { init, refreshDaily };
 })();
